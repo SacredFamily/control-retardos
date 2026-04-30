@@ -18,14 +18,19 @@
 
     <script>
         const codeReader = new ZXing.BrowserQRCodeReader();
-        // CORRECCIÓN: La URL debe ir entre comillas
+        const videoElement = document.getElementById('video');
         const RESULT_URL = "https://script.google.com/macros/s/AKfycbwWXOzjsvpHzCUr-Hr0XHwo8juBxmBesm10QXXZwbgSKMfDX25W6cmyClg3QtQHUenq/exec"; 
 
-        // Intentar usar la cámara trasera específicamente
+        // Esta función inicia el escaneo con mayor sensibilidad
         codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
             if (result) {
-                document.getElementById('resultado').innerText = "Enviando: " + result.text;
+                // Al detectar algo, vibra (si el cel lo permite) y avisa
+                if (navigator.vibrate) navigator.vibrate(100); 
                 
+                document.getElementById('resultado').style.color = "blue";
+                document.getElementById('resultado').innerText = "Procesando Estudiante...";
+                
+                // Enviamos los datos a la hoja 28042026_PRIMARIA
                 fetch(RESULT_URL + "?qrData=" + encodeURIComponent(result.text), {
                     method: 'GET',
                     mode: 'no-cors'
@@ -33,6 +38,8 @@
                 .then(() => {
                     document.getElementById('resultado').style.color = "green";
                     document.getElementById('resultado').innerText = "✅ Registro Exitoso";
+                    
+                    // Espera 3 segundos antes de permitir el siguiente escaneo
                     setTimeout(() => { 
                         document.getElementById('resultado').style.color = "#0056b3";
                         document.getElementById('resultado').innerText = "Listo para siguiente escaneo"; 
@@ -40,9 +47,11 @@
                 })
                 .catch(error => {
                     document.getElementById('resultado').style.color = "red";
-                    document.getElementById('resultado').innerText = "❌ Error al enviar";
-                    console.error(error);
+                    document.getElementById('resultado').innerText = "❌ Error de conexión";
                 });
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error(err);
             }
         });
     </script>
